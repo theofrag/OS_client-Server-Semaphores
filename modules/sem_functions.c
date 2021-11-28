@@ -81,20 +81,16 @@ void clearIPCS(int semid1,int semid2,int semid3,int shmem1/*,int shmem2*/){
     /* remove  semaphores: */
     if (semctl(semid1, 0, IPC_RMID) == -1) {
         perror("semctl removing sem1");
-        exit(1);
     }
     if (semctl(semid2, 0, IPC_RMID) == -1) {
         perror("semctl removing sem2");
-        exit(1);
     }
     if (semctl(semid3, 0, IPC_RMID) == -1) {
         perror("semctl removing sem3");
-        exit(1);
     }
     /* Delete the shared memory segment */
     
     if (shmctl(shmem1,IPC_RMID,NULL) == -1) {
         perror("semctl removing shared memory");
-        exit(1);
     }
 }

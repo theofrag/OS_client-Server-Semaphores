@@ -14,7 +14,7 @@ OBJS =   test.o $(MODULES)/general.o $(MODULES)/sem_functions.o
 
 # Το εκτελέσιμο πρόγραμμα
 EXEC = test
-ARGS = 2 2
+ARGS = 200 1
 
 
 $(EXEC): $(OBJS)

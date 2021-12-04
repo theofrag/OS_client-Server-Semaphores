@@ -14,7 +14,7 @@ OBJS =   test.o $(MODULES)/general.o $(MODULES)/sem_functions.o
 
 # Το εκτελέσιμο πρόγραμμα
 EXEC = test
-ARGS = 200 1
+ARGS = 100 1 test.txt
 
 
 $(EXEC): $(OBJS)
@@ -28,4 +28,4 @@ run: $(EXEC)
 	./$(EXEC) $(ARGS)
 
 valgrind: run
-	valgrind -s ./$(EXEC)
+	valgrind -s  ./$(EXEC) $(ARGS)

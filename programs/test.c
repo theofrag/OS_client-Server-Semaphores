@@ -11,12 +11,24 @@
 #include "common.h"
 #include "sem_functions.h"
 #include "general.h"
+
 // client-server
 
 int main(int args, char** argv){
 
     int K = atoi(argv[1]);  // number of clients
     int N = atoi(argv[2]);  // poses fores tha zitisei o kathe client grammi
+
+
+    
+    char* fileName=argv[3];
+    fprintf(stdout,"%s\n",fileName);
+
+
+
+    int numberOfLines= countNUmberOfLines(fileName);
+    if(numberOfLines == -1)
+        exit(-1);
 
     key_t key1,key2,key3;
     int sem_id1,sem_id2,sem_id3;
@@ -60,7 +72,7 @@ int main(int args, char** argv){
     shared_memory = shmat(shmid, (void *)0, 0);
     if (shared_memory == (void *)-1) {
         fprintf(stderr, "shmat failed\n");
-        //TODO na balo clear ipcs
+        clearIPCS(sem_id1,sem_id2,sem_id3,shmid);
         exit(EXIT_FAILURE);
     }
     printf("Shared memory segment with id %d attached at %p \n", shmid, shared_memory);
@@ -70,7 +82,6 @@ int main(int args, char** argv){
     struct shared_use_st*  shared_stuff;
     shared_stuff= (struct shared_use_st* )shared_memory;
 
-    
     // create clients
     int pid;
     for (int i = 0; i <K; ++i) {
@@ -79,7 +90,7 @@ int main(int args, char** argv){
             perror("Could not fork, please create clients manually");
         }
         else if(pid==0){
-            fprintf(stdout,"Just forked\n");
+            fprintf(stdout,"Just created a client %d\n",getpid());
             break;
         }        
     }
@@ -88,7 +99,7 @@ int main(int args, char** argv){
     
     if(pid==0){
         float meanTime=0,sttime1=0, sttime2=0;  //sttime1 and sttime2 are used to calculate overall procces time
-        int numberOfLines= countNUmberOfLines("test.txt");
+        
         for(int i=0;i<N;i++){   //kane to parakato gia N dosolipsies
             srand(time(NULL) ^ (getpid()<<16)); //arxikopoiisi genitrias tyxaion arithmon
             int line= rand()%numberOfLines;
@@ -101,7 +112,7 @@ int main(int args, char** argv){
                 semctl(sem_id2, 0, IPC_RMID); //gia na katalabei o server oti kati egine kai na termatisei 
                 exit(EXIT_FAILURE);
             }
-            fprintf(stdout,"Entered by client %d\n",getpid());  //todo isos to sbiso auto den xreiazetai
+            fprintf(stdout,"Entered by client %d\n",getpid()); 
 
             // Write in shared memory which line you want
             shared_stuff->line_number=line;
@@ -128,7 +139,6 @@ int main(int args, char** argv){
 
             fprintf(stdout,"Preparing to leave client %d\n",getpid());
             fprintf(stdout,"Sem1 before up is: %d\n",semctl(sem_id1,0,GETVAL));
-            // semUp(sem_id1);  //up sem1 //!edo moy ebgale error ,giati? //!bale error handling
             if(semUp(sem_id1)==-1){
                 fprintf(stdout,"Unexpected error in sem1 before up operation\n");
                 semctl(sem_id2, 0, IPC_RMID); //gia na katalabei o server oti kati egine kai na termatisei 
@@ -138,6 +148,8 @@ int main(int args, char** argv){
             fprintf(stdout, "Left client %d\n",getpid());
         }
             fprintf(stdout,"\x1b[31m Overall time for process %d is %f \x1b[0m \n ",getpid(),meanTime/N);
+
+
             printf("Child (%d) calling exit(0)\n", getpid());
             exit(0); 
     }
@@ -155,14 +167,19 @@ int main(int args, char** argv){
             }
             printf("entered toSERVER\n");
 
-            char* toCopy=readLineFromFile(shared_stuff->line_number,"test.txt");
+            char* toCopy=readLineFromFile(shared_stuff->line_number,fileName);
+            if( toCopy == NULL ){
+                free(toCopy); 
+                clearIPCS(sem_id1,sem_id2,sem_id3,shmid/*,shmem2*/);
+                exit(EXIT_FAILURE);
+            }
             strcpy(shared_stuff->some_text,toCopy);
             free(toCopy);   //gia na min exo memory leaks
             fprintf(stdout,"\x1B[32m response line: %d \x1B[0m \n",shared_stuff->line_number);
 
             if(semUp(sem_id3)==-1){
                 fprintf(stdout,"Unexpected error in sem3 before up operation\n");
-                clearIPCS(sem_id1,sem_id2,sem_id3,shmid/*,shmem2*/);
+                clearIPCS(sem_id1,sem_id2,sem_id3,shmid);
                 exit(EXIT_FAILURE);
             }
             printf("exited from SERVER part\n"); 
@@ -180,7 +197,7 @@ int main(int args, char** argv){
         }
         clearIPCS(sem_id1,sem_id2,sem_id3,shmid);
     
-        
+
         exit(EXIT_SUCCESS);
     }
 

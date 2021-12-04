@@ -12,7 +12,11 @@ char* readLineFromFile(int line_number, char* fileName){
     char* toReturn;
     int buffer_length=100;
     
-    file=fopen(fileName,"r");   //TODO na balo sinthiki lathous edo
+    file=fopen(fileName,"r");
+    if(file == NULL){
+        perror("Error opening file");
+        return NULL;
+    }
     int i=0;  
     while(fgets(buffer,buffer_length,file)){
         if(i++==line_number){
@@ -22,7 +26,7 @@ char* readLineFromFile(int line_number, char* fileName){
             return toReturn;}
     
     }
-    return 0;
+    return NULL;
     
 }
 
@@ -30,10 +34,15 @@ int countNUmberOfLines(char* fileName){
     char buffer[100];
     FILE* file;
     int buffer_length=100;
-    file=fopen(fileName,"r");   //TODO na balo sinthiki lathous edo
+    file=fopen(fileName,"r");  
+    if( file == NULL){
+        perror("Error opening file");
+        return -1;
+    }
     int i=0;  
     while(fgets(buffer,buffer_length,file)){
         i++;    
     }
+    fclose(file);
     return i;
 }
